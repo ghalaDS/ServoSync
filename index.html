@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Robot Arm Control Panel</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    h2 { text-align: center; }
+    .slider-container { margin-bottom: 10px; }
+    label { display: inline-block; width: 70px; }
+    input[type="range"] { width: 200px; }
+    .buttons { margin: 15px 0; }
+    table {
+      margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      table-layout: fixed;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Robot Arm Control Panel</h2>
+
+<div id="sliders"></div>
+
+<div class="buttons">
+  <button onclick="reset()">Reset</button>
+  <button onclick="save()">Save Pose</button>
+  <button onclick="run()">Run</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Motor 1</th>
+      <th>Motor 2</th>
+      <th>Motor 3</th>
+      <th>Motor 4</th>
+      <th>Motor 5</th>
+      <th>Motor 6</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+  for (let i = 1; i <= 6; i++) {
+    document.getElementById("sliders").innerHTML += `
+      <div class="slider-container">
+        <label>${i}:</label>
+        <input type="range" min="0" max="180" value="90" id="m${i}" oninput="v${i}.innerText=this.value">
+        <span id="v${i}">90</span>
+      </div>
+    `;
+  }
+
+  function reset() {
+    for (let i = 1; i <= 6; i++) {
+      document.getElementById(`m${i}`).value = 90;
+      document.getElementById(`v${i}`).innerText = 90;
+    }
+  }
+
+  function save() {
+    const data = new FormData();
+    for (let i = 1; i <= 6; i++) {
+      data.append(`motor${i}`, document.getElementById(`m${i}`).value);
+    }
+
+    fetch('save_pose.php', { method: 'POST', body: data })
+      .then(res => res.text())
+      .then(alert)
+      .then(loadPoses)
+      .catch(() => alert("Error"));
+  }
+
+  function run() {
+    fetch('get_run_pose.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.length > 0) {
+          const pose = data[0];
+          loadPose(pose.motor1, pose.motor2, pose.motor3, pose.motor4, pose.motor5, pose.motor6);
+          alert(`Running Pose:\n[${pose.motor1}, ${pose.motor2}, ${pose.motor3}, ${pose.motor4}, ${pose.motor5}, ${pose.motor6}]`);
+        } else {
+          alert("No poses to run.");
+        }
+      });
+  }
+
+  function loadPoses() {
+    fetch('get_run_pose.php')
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector("tbody");
+        tbody.innerHTML = "";
+
+        data.forEach((pose, i) => {
+          const row = `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${pose.motor1}</td>
+              <td>${pose.motor2}</td>
+              <td>${pose.motor3}</td>
+              <td>${pose.motor4}</td>
+              <td>${pose.motor5}</td>
+              <td>${pose.motor6}</td>
+              <td>
+                <button onclick="loadPose(${pose.motor1}, ${pose.motor2}, ${pose.motor3}, ${pose.motor4}, ${pose.motor5}, ${pose.motor6})">Load</button>
+                <button onclick="removePose(${pose.id})">Remove</button>
+              </td>
+            </tr>`;
+          tbody.innerHTML += row;
+        });
+      });
+  }
+
+  function loadPose(m1, m2, m3, m4, m5, m6) {
+    const motors = [m1, m2, m3, m4, m5, m6];
+    for (let i = 1; i <= 6; i++) {
+      document.getElementById(`m${i}`).value = motors[i - 1];
+      document.getElementById(`v${i}`).innerText = motors[i - 1];
+    }
+  }
+
+  function removePose(id) {
+    const data = new FormData();
+    data.append('id', id);
+
+    fetch('update_status.php', {
+      method: 'POST',
+      body: data
+    })
+    .then(() => loadPoses());
+  }
+
+  window.onload = () => loadPoses();
+</script>
+
+</body>
+</html>
