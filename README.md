@@ -21,6 +21,13 @@ After running a pose:
 
 <img src="screenshot0.png" width="500"/>
 
+## Live Preview (Frontend Only)
+You can preview the interface (without PHP/database functionality) directly via GitHub Pages here:
+
+[View Live](https://ghalaDS.github.io/ServoSync)
+
+> Note: Save/Run buttons won’t work on GitHub Pages since PHP isn't supported.
+
 ## How to Run
 
 1. Install **XAMPP** or any local server with PHP & MySQL support.
@@ -46,3 +53,11 @@ RAC/
 ├── db.php # Database connection
 ├── screenshot.png # Saved pose example
 └── screenshot0.png # Run pose example
+````
+
+## License
+
+This project is licensed under the MIT License.  
+See the [LICENSE](./LICENSE) file for details.
+
+
